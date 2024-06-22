@@ -61,9 +61,8 @@ it('Encrypted JWT with ECDH-ES+A128KW and A128GCM, and party info', async () => 
   })
   .setProtectedHeader({ 
     alg: 'ECDH-ES+A128KW', 
-    enc: 'A128GCM', 
-    apu: jose.base64url.encode("Initiator Public Identity"), 
-    apv: jose.base64url.encode("Responder Public Identity") })
+    enc: 'A128GCM'
+   })
   .setIssuedAt()
   .setIssuer('urn:example:issuer')
   .setAudience('urn:example:audience')

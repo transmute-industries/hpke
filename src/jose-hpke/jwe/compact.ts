@@ -1,16 +1,21 @@
 import { base64url } from "jose";
 
 import { privateKeyFromJwk, publicKeyFromJwk  } from "../../crypto/keys";
-import { isKeyAlgorithmSupported, suites  } from "../jwk";
+import { isKeyAlgorithmSupported  } from "../jwk";
 
+import { AeadId, CipherSuite, KdfId, KemId } from "hpke-js";
 
-import { HPKE_JWT_OPTIONS  } from '../types'
+import { HPKE_JWT_ENCRYPT_OPTIONS  } from '../types'
 
-export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any, options?: HPKE_JWT_OPTIONS): Promise<string> => {
+export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any, options?: HPKE_JWT_ENCRYPT_OPTIONS): Promise<string> => {
   if (!isKeyAlgorithmSupported(publicKeyJwk)) {
     throw new Error('Public key algorithm is not supported')
   }
-  const suite = suites[publicKeyJwk.alg]
+  const suite = new CipherSuite({
+    kem: KemId.DhkemP256HkdfSha256,
+    kdf: KdfId.HkdfSha256,
+    aead: AeadId.Aes128Gcm,
+  })
   const sender = await suite.createSenderContext({
     recipientPublicKey: await publicKeyFromJwk(publicKeyJwk),
   });
@@ -19,11 +24,13 @@ export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any, options?
     alg: publicKeyJwk.alg,
     enc: publicKeyJwk.alg.split('-').pop() // HPKE algorithms always end in an AEAD.
   } as Record<string, any>
-  if (options?.keyManagementParameters.apu){
-    headerParams.apu = base64url.encode(options?.keyManagementParameters.apu)
-  }
-  if (options?.keyManagementParameters.apv){
-    headerParams.apv = base64url.encode(options?.keyManagementParameters.apv)
+  if (options?.keyManagementParameters){
+    if (options?.keyManagementParameters.apu){
+      headerParams.apu = base64url.encode(options?.keyManagementParameters.apu)
+    }
+    if (options?.keyManagementParameters.apv){
+      headerParams.apv = base64url.encode(options?.keyManagementParameters.apv)
+    }
   }
   const protectedHeader = base64url.encode(JSON.stringify(headerParams))
   const aad = new TextEncoder().encode(protectedHeader)
@@ -41,7 +48,11 @@ export const decrypt = async (compact: string, privateKeyJwk: any): Promise<Uint
   if (!isKeyAlgorithmSupported(privateKeyJwk)) {
     throw new Error('Public key algorithm is not supported')
   }
-  const suite = suites[privateKeyJwk.alg]
+  const suite = new CipherSuite({
+    kem: KemId.DhkemP256HkdfSha256,
+    kdf: KdfId.HkdfSha256,
+    aead: AeadId.Aes128Gcm,
+  })
   const [protectedHeader, encrypted_key, iv, ciphertext, tag] = compact.split('.');
   const recipient = await suite.createRecipientContext({
     recipientKey: await privateKeyFromJwk(privateKeyJwk),

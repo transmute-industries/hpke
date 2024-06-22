@@ -16,6 +16,7 @@ This is yet another HPKE implementation for JOSE.
 The purpose of this experimental implementation is to address open questions regarding the IETF drafts.
 
 - [x] Integrated Encryption - how is it signaled in JOSE, what values are used for "alg" and "enc".
-- [ ] Party U / Party V - identity information in key establishment.
+- [x] Party U / Party V - identity information in key establishment.
+- [x] Auth PSK - Authenticated mode with pre shared keys
 
 

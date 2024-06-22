@@ -3,7 +3,10 @@ import { base64url } from "jose";
 import { privateKeyFromJwk, publicKeyFromJwk  } from "../../crypto/keys";
 import { isKeyAlgorithmSupported, suites  } from "../jwk";
 
-export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any): Promise<string> => {
+
+import { HPKE_JWT_OPTIONS  } from '../types'
+
+export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any, options?: HPKE_JWT_OPTIONS): Promise<string> => {
   if (!isKeyAlgorithmSupported(publicKeyJwk)) {
     throw new Error('Public key algorithm is not supported')
   }
@@ -12,11 +15,19 @@ export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any): Promise
     recipientPublicKey: await publicKeyFromJwk(publicKeyJwk),
   });
   const encodedEncapsulatedKey = base64url.encode(new Uint8Array(sender.enc))
-  const protectedHeader = base64url.encode(JSON.stringify({
+  const headerParams = {
     alg: publicKeyJwk.alg,
     enc: publicKeyJwk.alg.split('-').pop() // HPKE algorithms always end in an AEAD.
-  }))
+  } as Record<string, any>
+  if (options?.keyManagementParameters.apu){
+    headerParams.apu = base64url.encode(options?.keyManagementParameters.apu)
+  }
+  if (options?.keyManagementParameters.apv){
+    headerParams.apv = base64url.encode(options?.keyManagementParameters.apv)
+  }
+  const protectedHeader = base64url.encode(JSON.stringify(headerParams))
   const aad = new TextEncoder().encode(protectedHeader)
+  // apu / apv are protected by aad, not as part of kdf
   const ciphertext = base64url.encode(new Uint8Array(await sender.seal(plaintext, aad)));
   const encrypted_key = encodedEncapsulatedKey
   const iv = ``

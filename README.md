@@ -11,11 +11,11 @@
 
 🚧 Experimental 🔥
 
-This is yet another HPKE implementation for JOSE and COSE.
+This is yet another HPKE implementation for JOSE.
 
 The purpose of this experimental implementation is to address open questions regarding the IETF drafts.
 
-- [x] Integrated Encryption - how is it signaled in JOSE and COSE, what values are used for "alg" and "enc".
+- [x] Integrated Encryption - how is it signaled in JOSE, what values are used for "alg" and "enc".
 - [ ] Party U / Party V - identity information in key establishment.
-- [ ] Cross Mode Attacks - How are they mitigated in COSE and JOSE?
+
 

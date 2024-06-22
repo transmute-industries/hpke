@@ -12,8 +12,8 @@ export const encryptJWT = async (claims: Record<string, any>, options?: HPKE_JWT
   return jwe.compact.encrypt(plaintext, options?.recipientPublicKey, options)
 }
 
-export const decryptJWT = async (jwt: string, options?: HPKE_JWT_DECRYPT_OPTIONS) => {
-  const plaintext = await jwe.compact.decrypt(jwt, options?.recipientPrivateKey)
+export const decryptJWT = async (jwt: string, options: HPKE_JWT_DECRYPT_OPTIONS) => {
+  const plaintext = await jwe.compact.decrypt(jwt, options)
   const [protectedHeader] = jwt.split('.')
   return {
     protectedHeader: JSON.parse(decoder.decode(base64url.decode(protectedHeader))),

@@ -3,35 +3,62 @@ import { base64url } from "jose";
 import { privateKeyFromJwk, publicKeyFromJwk  } from "../../crypto/keys";
 import { isKeyAlgorithmSupported  } from "../jwk";
 
-import { AeadId, CipherSuite, KdfId, KemId } from "hpke-js";
+import { AeadId, CipherSuite, KdfId, KemId, RecipientContextParams, SenderContextParams } from "hpke-js";
 
-import { HPKE_JWT_ENCRYPT_OPTIONS  } from '../types'
+import { HPKE_JWT_DECRYPT_OPTIONS, HPKE_JWT_ENCRYPT_OPTIONS  } from '../types'
+
+const decoder = new TextDecoder()
 
 export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any, options?: HPKE_JWT_ENCRYPT_OPTIONS): Promise<string> => {
   if (!isKeyAlgorithmSupported(publicKeyJwk)) {
     throw new Error('Public key algorithm is not supported')
   }
+
+  const senderParams = {
+    recipientPublicKey: await publicKeyFromJwk(publicKeyJwk),
+  } as SenderContextParams
+
   const suite = new CipherSuite({
     kem: KemId.DhkemP256HkdfSha256,
     kdf: KdfId.HkdfSha256,
     aead: AeadId.Aes128Gcm,
   })
-  const sender = await suite.createSenderContext({
-    recipientPublicKey: await publicKeyFromJwk(publicKeyJwk),
-  });
-  const encodedEncapsulatedKey = base64url.encode(new Uint8Array(sender.enc))
+  
   const headerParams = {
     alg: publicKeyJwk.alg,
     enc: publicKeyJwk.alg.split('-').pop() // HPKE algorithms always end in an AEAD.
   } as Record<string, any>
+
   if (options?.keyManagementParameters){
-    if (options?.keyManagementParameters.apu){
-      headerParams.apu = base64url.encode(options?.keyManagementParameters.apu)
+    const { keyManagementParameters } = options
+    if (keyManagementParameters.apu){
+      headerParams.apu = base64url.encode(keyManagementParameters.apu)
     }
-    if (options?.keyManagementParameters.apv){
-      headerParams.apv = base64url.encode(options?.keyManagementParameters.apv)
+    if (keyManagementParameters.apv){
+      headerParams.apv = base64url.encode(keyManagementParameters.apv)
+    }
+    if (keyManagementParameters.psk){
+      // in JOSE kid is known to be a string
+      headerParams.psk_id = decoder.decode(keyManagementParameters.psk.id) 
+      if (!keyManagementParameters.psk.key){
+        throw new Error('psk key required when id present.')
+      }
+      senderParams.psk = {
+        id: keyManagementParameters.psk.id,
+        key: keyManagementParameters.psk.key
+      }
     }
   }
+
+  // auth mode
+  if (options?.senderPrivateKey){
+    headerParams.auth_kid = options.senderPrivateKey.kid
+    senderParams.senderKey = await privateKeyFromJwk(options.senderPrivateKey)
+  }
+
+  const sender = await suite.createSenderContext(senderParams);
+  const encodedEncapsulatedKey = base64url.encode(new Uint8Array(sender.enc))
+ 
   const protectedHeader = base64url.encode(JSON.stringify(headerParams))
   const aad = new TextEncoder().encode(protectedHeader)
   // apu / apv are protected by aad, not as part of kdf
@@ -44,20 +71,40 @@ export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any, options?
   return jwe
 }
 
-export const decrypt = async (compact: string, privateKeyJwk: any): Promise<Uint8Array> => {
-  if (!isKeyAlgorithmSupported(privateKeyJwk)) {
+export const decrypt = async (compact: string, options: HPKE_JWT_DECRYPT_OPTIONS): Promise<Uint8Array> => {
+  if (!isKeyAlgorithmSupported(options.recipientPrivateKey)) {
     throw new Error('Public key algorithm is not supported')
   }
+  const [protectedHeader, encrypted_key, iv, ciphertext, tag] = compact.split('.');
+  const encapsulated_key = base64url.decode(encrypted_key)
+
+  const recipientParams = {
+    recipientKey: await privateKeyFromJwk(options.recipientPrivateKey),
+    enc: encapsulated_key
+  } as RecipientContextParams
+
+  if (options.keyManagementParameters){
+    const { keyManagementParameters } = options
+    if (keyManagementParameters.psk){
+      recipientParams.psk = {
+        id: keyManagementParameters.psk.id as any, 
+        key: keyManagementParameters.psk.key as any
+      }
+    }
+  }
+
+  if (options.senderPublicKey){
+    recipientParams.senderPublicKey = await publicKeyFromJwk(options.senderPublicKey)
+  }
+
   const suite = new CipherSuite({
     kem: KemId.DhkemP256HkdfSha256,
     kdf: KdfId.HkdfSha256,
     aead: AeadId.Aes128Gcm,
   })
-  const [protectedHeader, encrypted_key, iv, ciphertext, tag] = compact.split('.');
-  const recipient = await suite.createRecipientContext({
-    recipientKey: await privateKeyFromJwk(privateKeyJwk),
-    enc: base64url.decode(encrypted_key)
-  })
+
+
+  const recipient = await suite.createRecipientContext(recipientParams)
   const aad = new TextEncoder().encode(protectedHeader)
   const plaintext = await recipient.open(base64url.decode(ciphertext), aad)
   return new Uint8Array(plaintext)

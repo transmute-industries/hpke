@@ -13,7 +13,8 @@ export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any): Promise
   });
   const encodedEncapsulatedKey = base64url.encode(new Uint8Array(sender.enc))
   const protectedHeader = base64url.encode(JSON.stringify({
-    alg: publicKeyJwk.alg
+    alg: publicKeyJwk.alg,
+    enc: publicKeyJwk.alg.split('-').pop() // HPKE algorithms always end in an AEAD.
   }))
   const aad = new TextEncoder().encode(protectedHeader)
   const ciphertext = base64url.encode(new Uint8Array(await sender.seal(plaintext, aad)));

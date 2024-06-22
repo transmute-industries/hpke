@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "hpke-js": "^1.2.7",
-    "jose": "^5.4.1"
+    "jose": "^5.4.1",
+    "moment": "^2.30.1"
   }
 }

@@ -3,8 +3,7 @@ import * as jose from 'jose'
 import { createHash, createSecretKey, createDecipheriv, createCipheriv } from 'node:crypto'
 import crypto from 'crypto'
 
-const keySize = 128 // only supported option for testing
-const algorithm = `aes-${keySize}-gcm`
+
 const gcmOptions = { authTagLength: 16 } as any
 
 import { publicKeyFromJwk, privateKeyFromJwk } from '../../crypto/keys'
@@ -25,6 +24,8 @@ export const prepareJweAad = (encodedProtectedHeader: string, encodedAad?: strin
 }
 
 export const encrypt = (plaintext: Uint8Array, cek: Uint8Array, iv: Uint8Array, aad: Uint8Array)=>{
+  const keySize = 128 // only supported option for testing
+  const algorithm = `aes-${keySize}-gcm`
   const cipher = createCipheriv(algorithm, cek, iv, gcmOptions) as crypto.CipherGCM
   cipher.setAAD(aad, { plaintextLength: plaintext.length })
   const ciphertext = cipher.update(plaintext)
@@ -46,6 +47,8 @@ export function decrypt(
   aad: Uint8Array,
 ) {
   try {
+    const keySize = 128 // only supported option for testing
+    const algorithm = `aes-${keySize}-gcm`
     const decipher = createDecipheriv(algorithm, cek, iv, gcmOptions) as any
     decipher.setAuthTag(tag)
     decipher.setAAD(aad, { plaintextLength: ciphertext.length })

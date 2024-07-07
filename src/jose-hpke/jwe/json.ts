@@ -38,7 +38,7 @@ export const encrypt = async (plaintext: Uint8Array, recipients: any, options: H
   // and add the result to the unprotected header recipients property
   for (const recipient of recipients.keys) {
     if (recipient.alg === 'HPKE-P256-SHA256-A128GCM') {
-      const wrappedWithHPKE = await wrapForRecipient(cek, recipient, options) // psk / auth mode
+      const wrappedWithHPKE = await wrapForRecipient(cek, recipient, options, protectedHeader)
       jwe.recipients.push(wrappedWithHPKE)
     } else if (recipient.alg === 'ECDH-ES+A128KW') {
       const wrappedWithECDH = await aead.wrapForRecipient(cek, recipient)
@@ -60,11 +60,14 @@ export const decrypt = async (jwe: any, recipients: any, options: HPKE_JWT_DECRY
   })
   // setup hpke
   const context = await prepareRecipientContext(recipientPrivateKeyJwk, recipient.header, options)
-  // const aad = new TextEncoder().encode(protectedHeader)
   const encryptedContentEncryptionKey = jose.base64url.decode(recipient.encrypted_key)
   // decrypt cek
-  // no aad here means no recipient identity binding (apu / apv) via HPKE info, or aad
-  const decryptedContentEncryptionKey = new Uint8Array(await context.open(encryptedContentEncryptionKey)) 
+  const decryptedContentEncryptionKey = new Uint8Array(
+    await context.open(
+      encryptedContentEncryptionKey, 
+      new TextEncoder().encode(jwe.protected)
+    )
+  ) 
   const encryptedContent = jose.base64url.decode(jwe.ciphertext)
   const iv = jose.base64url.decode(jwe.iv)
   const tag = jose.base64url.decode(jwe.tag)

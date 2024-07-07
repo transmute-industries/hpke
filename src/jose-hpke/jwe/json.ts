@@ -59,7 +59,9 @@ export const decrypt = async (jwe: any, recipients: any, options: HPKE_JWT_DECRY
     return r.header.kid === privateKeyId
   })
   // setup hpke
-  const context = await prepareRecipientContext(recipientPrivateKeyJwk, recipient.header, options)
+
+  const ek = jose.base64url.decode(recipient.header.ek)
+  const context = await prepareRecipientContext(recipientPrivateKeyJwk, ek, options)
   const encryptedContentEncryptionKey = jose.base64url.decode(recipient.encrypted_key)
   // decrypt cek
   const decryptedContentEncryptionKey = new Uint8Array(

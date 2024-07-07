@@ -152,5 +152,7 @@ it('JSON serialized HPKE JWE to Compact', async () => {
   }
   const jwe = await hpke.jwe.json.encrypt(plaintext, recipients, senderOptions)
   const jwt = hpke.jwe.json.toCompactSerialization(jwe)
+  // console.log(jwt)
+  // console.log(JSON.stringify(jwe, null, 2))
   expect(jwt.split(".").length).toBe(5) // unprotected headers destroyed in the process
 })

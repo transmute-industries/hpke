@@ -38,6 +38,8 @@ it('Encrypted JWT with HPKE-P256-SHA256-A128GCM (auth and psk)', async () => {
     }
   })
   // protected.encapsulated_key.<no iv>.ciphertext.<no tag>
+  // console.log(jwe)
+  // console.log(JSON.stringify(hpke.jwe.compact.toJsonSerialization(jwe)))
   const result = await hpke.jwt.decryptJWT(jwe, {
     senderPublicKey: publicKey,
     recipientPrivateKey: privateKey,

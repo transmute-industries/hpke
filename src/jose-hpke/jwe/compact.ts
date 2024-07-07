@@ -6,28 +6,18 @@ import { isKeyAlgorithmSupported  } from "../jwk";
 import { AeadId, CipherSuite, KdfId, KemId, RecipientContextParams, SenderContextParams } from "hpke-js";
 
 import { HPKE_JWT_DECRYPT_OPTIONS, HPKE_JWT_ENCRYPT_OPTIONS  } from '../types'
-import { prepareSenderContext } from "../prepareSenderContext";
-import { prepareRecipientHeader } from "../prepareRecipientHeader";
-
-const decoder = new TextDecoder()
+import { modes } from "..";
 
 export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any, options?: HPKE_JWT_ENCRYPT_OPTIONS): Promise<string> => {
   if (!isKeyAlgorithmSupported(publicKeyJwk)) {
     throw new Error('Public key algorithm is not supported')
   }
-
-  const sender = await prepareSenderContext(publicKeyJwk, options)
-  const header = await prepareRecipientHeader(publicKeyJwk, options)
-  const encodedEncapsulatedKey = base64url.encode(new Uint8Array(sender.enc))
-  const protectedHeader = base64url.encode(JSON.stringify(header))
-  const aad = new TextEncoder().encode(protectedHeader)
-  // apu / apv are protected by aad, not as part of kdf
-  const ciphertext = base64url.encode(new Uint8Array(await sender.seal(plaintext, aad)));
-  const encrypted_key = encodedEncapsulatedKey
-  const iv = ``
-  const tag = ``
+  if (options?.additionalAuthenticatedData) {
+    throw new Error('AdditionalAuthenticatedData is not supported in compact mode')
+  }
+  const encrypted = await modes.integrated.encrypt(plaintext, publicKeyJwk, options as any)
   // https://datatracker.ietf.org/doc/html/rfc7516#section-3.1
-  const jwe = `${protectedHeader}.${encrypted_key}.${iv}.${ciphertext}.${tag}`
+  const jwe = `${encrypted.protected}.${encrypted.encrypted_key}.${encrypted.iv || ''}.${encrypted.ciphertext}.${encrypted.tag || ''}`
   return jwe
 }
 

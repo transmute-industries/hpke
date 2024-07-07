@@ -30,11 +30,10 @@ it('JSON serialized Compact JWT', async () => {
       }
     }
   })
-
   const jweJsonSerialized = hpke.jwe.compact.toJsonSerialization(jwe)
-  // For example:
-  console.log(jwe)
-  console.log(JSON.stringify(jweJsonSerialized, null, 2))
+  // // For example:
+  // console.log(jwe)
+  // console.log(JSON.stringify(jweJsonSerialized, null, 2))
   expect(jweJsonSerialized.protected).toBeDefined()
   expect(jweJsonSerialized.encrypted_key).toBeDefined()
   expect(jweJsonSerialized.ciphertext).toBeDefined()

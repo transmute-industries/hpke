@@ -1,5 +1,6 @@
 
 export type HPKE_JWT_ENCRYPT_OPTIONS = {
+  type?:string
   senderPrivateKey?: Record<string, any>, 
   recipientPublicKey?: Record<string, any>, 
   keyManagementParameters?: {

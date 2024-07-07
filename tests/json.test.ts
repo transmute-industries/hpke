@@ -37,6 +37,8 @@ it('JSON serialized Compact JWT', async () => {
   expect(jweJsonSerialized.protected).toBeDefined()
   expect(jweJsonSerialized.encrypted_key).toBeDefined()
   expect(jweJsonSerialized.ciphertext).toBeDefined()
+  const jweCompactSerialized = hpke.jwe.json.toCompactSerialization(jweJsonSerialized)
+  expect(jweCompactSerialized).toBe(jwe)
 })
 
 const formatCryptoKey = async (k: any, alg: string)=>{
@@ -121,4 +123,34 @@ it('JSON serialized HPKE JWE', async () => {
   expect(decrypted2.unprotectedHeader.ek).toBeDefined()
   expect(decrypted2.unprotectedHeader.psk_id).toBeDefined()
   expect(decrypted2.unprotectedHeader.auth_kid).toBeDefined()
+})
+
+
+it('JSON serialized HPKE JWE to Compact', async () => {
+  const privateKey2 = await hpke.jwk.generate('HPKE-P256-SHA256-A128GCM')
+  const publicKey2 = await hpke.jwk.publicFromPrivate(privateKey2)
+  const recipients = {
+    keys: [
+      publicKey2
+    ]
+  }
+  const psk = new TextEncoder().encode("jugemujugemugokounosurikirekaija")
+  const pskid = new TextEncoder().encode("our-pre-shared-key-id")
+  const message = "⌛ My lungs taste the air of Time Blown past falling sands ⌛"
+  const plaintext = new TextEncoder().encode(message)
+  const senderOptions = {
+    algorithm: 'A128GCM' as 'A128GCM',
+    // additionalAuthenticatedData: new TextEncoder().encode('paul atreides'), // not supported in compact
+    senderPrivateKey:  privateKey2, 
+    recipientPublicKey:  publicKey2, 
+    keyManagementParameters: {
+      psk: {
+        id: pskid,
+        key: psk,
+      }
+    }
+  }
+  const jwe = await hpke.jwe.json.encrypt(plaintext, recipients, senderOptions)
+  const jwt = hpke.jwe.json.toCompactSerialization(jwe)
+  expect(jwt.split(".").length).toBe(5) // unprotected headers destroyed in the process
 })

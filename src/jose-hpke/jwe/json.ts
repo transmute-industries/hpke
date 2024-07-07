@@ -89,7 +89,17 @@ export const decrypt = async (jwe: any, recipients: any, options: HPKE_JWT_DECRY
 // BASE64URL(JWE Ciphertext) || '.' ||
 // BASE64URL(JWE Authentication Tag)
 
-export const toCompactSerialization = ({ protectedHeader, encrypted_key, iv, ciphertext, tag }: any) => {
-  // not correct.
-  return `${protectedHeader}.${encrypted_key}.${iv}.${ciphertext}.${tag}`
+export const toCompactSerialization = (jwe: any) => {
+  if (jwe.recipients && jwe.recipients.length !== 1){
+    throw new Error('Compact serialization does not support multiple recipients')
+  }
+  if (jwe.aad && jwe.aad.length){
+    throw new Error('Compact serialization does not support additional authenticated data')
+  }
+  const { iv, ciphertext, tag, aad } = jwe;
+  if (jwe.encrypted_key){
+    return `${jwe.protected}.${jwe.encrypted_key}.${iv || ''}.${ciphertext}.${tag || ''}`
+  }
+  // we loose unprotected headers here....
+  return `${jwe.protected}.${jwe.recipients[0].encrypted_key}.${iv}.${ciphertext}.${tag}`
 }

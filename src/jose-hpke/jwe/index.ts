@@ -1,3 +1,4 @@
 import * as compact from './compact'
+import * as json from './json'
 
-export { compact }
+export { compact, json }

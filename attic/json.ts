@@ -216,7 +216,7 @@ export const decrypt = async (req: RequestGeneralDecrypt): Promise<any> => {
     const encryptedKey = jose.base64url.decode(matchingRecipient.encrypted_key)
     // unrwap the content encryption key
     const contentEncryptionKey = mixed.unwrap('A128KW', sharedSecret, encryptedKey)
-    // the test is the same for both HPKE-Base-P256-SHA256-A128GCM and ECDH-ES+A128KW with A128GCM
+    // the test is the same for both HPKE-P256-SHA256-A128GCM and ECDH-ES+A128KW with A128GCM
     return produceDecryptionResult(protectedHeader, ciphertext, tag, aad, iv, contentEncryptionKey);
   } else {
     throw new Error('Private key algorithm not supported.')

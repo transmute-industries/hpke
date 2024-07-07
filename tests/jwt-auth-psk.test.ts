@@ -4,10 +4,10 @@ import { jose as hpke  } from '../src'
 
 const claims = { 'urn:example:claim': true }
 
-it('Encrypted JWT with HPKE-AuthPSK-P256-SHA256-A128GCM (auth and psk)', async () => {
+it('Encrypted JWT with HPKE-P256-SHA256-A128GCM (auth and psk)', async () => {
   const privateKey = {
     "kid": "urn:ietf:params:oauth:jwk-thumbprint:sha-256:S6AXfdU_6Yfzvu0KDDJb0sFuwnIWPk6LMTErYhPb32s",
-    "alg": "HPKE-AuthPSK-P256-SHA256-A128GCM",
+    "alg": "HPKE-P256-SHA256-A128GCM",
     "kty": "EC",
     "crv": "P-256",
     "x": "wt36K06T4T4APWfGtioqDBXCvRN9evqkZjNydib9MaM",
@@ -53,7 +53,7 @@ it('Encrypted JWT with HPKE-AuthPSK-P256-SHA256-A128GCM (auth and psk)', async (
   expect(result.payload['aud']).toBe('urn:example:audience')
   expect(result.payload.iat).toBeDefined()
   expect(result.payload.exp).toBeDefined()
-  expect(result.protectedHeader['alg']).toBe('HPKE-AuthPSK-P256-SHA256-A128GCM')
+  expect(result.protectedHeader['alg']).toBe('HPKE-P256-SHA256-A128GCM')
   expect(result.protectedHeader['enc']).toBe('A128GCM')
   expect(result.protectedHeader['psk_id']).toBe('our-pre-shared-key-id')
   expect(result.protectedHeader['auth_kid']).toBe('urn:ietf:params:oauth:jwk-thumbprint:sha-256:S6AXfdU_6Yfzvu0KDDJb0sFuwnIWPk6LMTErYhPb32s')

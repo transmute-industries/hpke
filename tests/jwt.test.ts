@@ -26,8 +26,8 @@ it('Encrypted JWT with ECDH-ES+A128KW and A128GCM', async () => {
   expect(result.protectedHeader.epk).toBeDefined()
 })
 
-it('Encrypted JWT with HPKE-Base-P256-SHA256-A128GCM', async () => {
-  const privateKey = await hpke.jwk.generate('HPKE-Base-P256-SHA256-A128GCM')
+it('Encrypted JWT with HPKE-P256-SHA256-A128GCM', async () => {
+  const privateKey = await hpke.jwk.generate('HPKE-P256-SHA256-A128GCM')
   const publicKey = await hpke.jwk.publicFromPrivate(privateKey)
   const iat = moment().unix()
   const exp = moment().add(2, 'hours').unix()
@@ -51,7 +51,7 @@ it('Encrypted JWT with HPKE-Base-P256-SHA256-A128GCM', async () => {
   expect(result.payload['aud']).toBe('urn:example:audience')
   expect(result.payload.iat).toBeDefined()
   expect(result.payload.exp).toBeDefined()
-  expect(result.protectedHeader['alg']).toBe('HPKE-Base-P256-SHA256-A128GCM')
+  expect(result.protectedHeader['alg']).toBe('HPKE-P256-SHA256-A128GCM')
   expect(result.protectedHeader['enc']).toBe('A128GCM')
   // protected header does not contain epk
   expect(result.protectedHeader.epk).toBeUndefined()
@@ -88,8 +88,8 @@ it('Encrypted JWT with ECDH-ES+A128KW and A128GCM, and party info', async () => 
   expect(result.protectedHeader.apv).toBe("Qm9i")
 })
 
-it('Encrypted JWT with HPKE-Base-P256-SHA256-A128GCM, and party info ', async () => {
-  const privateKey = await hpke.jwk.generate('HPKE-Base-P256-SHA256-A128GCM')
+it('Encrypted JWT with HPKE-P256-SHA256-A128GCM, and party info ', async () => {
+  const privateKey = await hpke.jwk.generate('HPKE-P256-SHA256-A128GCM')
   const publicKey = await hpke.jwk.publicFromPrivate(privateKey)
   const iat = moment().unix()
   const exp = moment().add(2, 'hours').unix()
@@ -118,7 +118,7 @@ it('Encrypted JWT with HPKE-Base-P256-SHA256-A128GCM, and party info ', async ()
   expect(result.payload['aud']).toBe('urn:example:audience')
   expect(result.payload.iat).toBeDefined()
   expect(result.payload.exp).toBeDefined()
-  expect(result.protectedHeader['alg']).toBe('HPKE-Base-P256-SHA256-A128GCM')
+  expect(result.protectedHeader['alg']).toBe('HPKE-P256-SHA256-A128GCM')
   expect(result.protectedHeader['enc']).toBe('A128GCM')
   expect(result.protectedHeader.apu).toBe("QWxpY2U")
   expect(result.protectedHeader.apv).toBe("Qm9i")

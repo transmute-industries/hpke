@@ -30,7 +30,8 @@ export const decrypt = async (compact: string, options: HPKE_JWT_DECRYPT_OPTIONS
 
   const recipientParams = {
     recipientKey: await privateKeyFromJwk(options.recipientPrivateKey),
-    enc: encapsulated_key
+    enc: encapsulated_key,
+    info: options.hpke_info
   } as RecipientContextParams
 
   if (options.keyManagementParameters){

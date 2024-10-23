@@ -26,5 +26,6 @@ export type HPKE_JWT_DECRYPT_OPTIONS = {
       key: Uint8Array
     }
   }
+  hpke_info?: Uint8Array
 }
 

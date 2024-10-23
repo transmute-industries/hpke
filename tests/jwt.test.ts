@@ -40,6 +40,9 @@ it('Encrypted JWT with HPKE-P256-SHA256-A128GCM', async () => {
   }, {
     recipientPublicKey: publicKey
   })
+
+  const decoded = jose.decodeProtectedHeader(jwe)
+  expect(decoded.enc).toBe('dir')
   // protected.encapsulated_key.<no iv>.ciphertext.<no tag>
   const result = await hpke.jwt.decryptJWT(
     jwe,
@@ -52,7 +55,7 @@ it('Encrypted JWT with HPKE-P256-SHA256-A128GCM', async () => {
   expect(result.payload.iat).toBeDefined()
   expect(result.payload.exp).toBeDefined()
   expect(result.protectedHeader['alg']).toBe('HPKE-P256-SHA256-A128GCM')
-  expect(result.protectedHeader['enc']).toBe('A128GCM')
+  expect(result.protectedHeader['enc']).toBe('dir')
   // protected header does not contain epk
   expect(result.protectedHeader.epk).toBeUndefined()
   // encapsulated key is transported through "encrypted_key"
@@ -119,7 +122,7 @@ it('Encrypted JWT with HPKE-P256-SHA256-A128GCM, and party info ', async () => {
   expect(result.payload.iat).toBeDefined()
   expect(result.payload.exp).toBeDefined()
   expect(result.protectedHeader['alg']).toBe('HPKE-P256-SHA256-A128GCM')
-  expect(result.protectedHeader['enc']).toBe('A128GCM')
+  expect(result.protectedHeader['enc']).toBe('dir')
   expect(result.protectedHeader.apu).toBe("QWxpY2U")
   expect(result.protectedHeader.apv).toBe("Qm9i")
 })

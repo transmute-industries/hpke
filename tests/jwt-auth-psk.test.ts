@@ -56,7 +56,7 @@ it('Encrypted JWT with HPKE-P256-SHA256-A128GCM (auth and psk)', async () => {
   expect(result.payload.iat).toBeDefined()
   expect(result.payload.exp).toBeDefined()
   expect(result.protectedHeader['alg']).toBe('HPKE-P256-SHA256-A128GCM')
-  expect(result.protectedHeader['enc']).toBe('A128GCM')
+  expect(result.protectedHeader['enc']).toBe('dir')
   expect(result.protectedHeader['psk_id']).toBe('our-pre-shared-key-id')
   expect(result.protectedHeader['auth_kid']).toBe('urn:ietf:params:oauth:jwk-thumbprint:sha-256:S6AXfdU_6Yfzvu0KDDJb0sFuwnIWPk6LMTErYhPb32s')
 })

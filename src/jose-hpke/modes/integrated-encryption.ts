@@ -10,6 +10,7 @@ import { prepareRecipientContext } from '../prepareRecipientContext'
 export const encrypt = async (plaintext: Uint8Array, publicKeyJwk: any, options?: any): Promise<any> => {
   const sender = await prepareSenderContext(publicKeyJwk, options)
   const header = await prepareRecipientHeader(publicKeyJwk, options)
+  header.enc = "dir"; // 
   const encrypted_key = jose.base64url.encode(new Uint8Array(sender.enc))
   const protectedHeader = jose.base64url.encode(JSON.stringify(header))
   const encodedAad = options.additionalAuthenticatedData ? jose.base64url.encode(options.additionalAuthenticatedData) : undefined

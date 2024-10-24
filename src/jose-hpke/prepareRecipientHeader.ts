@@ -5,7 +5,7 @@ const decoder = new TextDecoder()
 export const prepareRecipientHeader = async (recipientPublicKey: any, options: any) =>{
   const headerParams = {
     alg: recipientPublicKey.alg,
-    enc: recipientPublicKey.alg.split('-').pop() // HPKE algorithms always end in an AEAD.
+    enc: "dir"
   } as Record<string, any>
   if (recipientPublicKey.kid){
     headerParams.kid = recipientPublicKey.kid

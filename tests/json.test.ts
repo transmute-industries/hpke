@@ -60,7 +60,22 @@ it('JSON serialized HPKE JWE', async () => {
   const key1 = await jose.generateKeyPair('ECDH-ES+A128KW', { crv: 'P-256', extractable: true })
   const privateKey1 = await formatCryptoKey(key1.privateKey, 'ECDH-ES+A128KW')
   const publicKey1 = await formatCryptoKey(key1.publicKey, 'ECDH-ES+A128KW')
-  const privateKey2 = await hpke.jwk.generate('HPKE-P256-SHA256-A128GCM')
+  const privateKey2 = {
+    "kid": "urn:ietf:params:oauth:jwk-thumbprint:sha-256:S6AXfdU_6Yfzvu0KDDJb0sFuwnIWPk6LMTErYhPb32s",
+    "alg": "HPKE-P256-SHA256-A128GCM",
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "wt36K06T4T4APWfGtioqDBXCvRN9evqkZjNydib9MaM",
+    "y": "eupgedeE_HAmVJ62kpSt2_EOoXb6e0y2YF1JPlfr1-I",
+    "d": "O3KznUTAxw-ov-9ZokwNaJ289RgP9VxQc7GJthaXzWY"
+  }
+
+  const psk_jwk = {
+    "kty": "oct",
+    "kid": "our-pre-shared-key-id",
+    "k": "anVnZW11anVnZW11Z29rb3Vub3N1cmlraXJla2FpamE"
+  }
+
   const publicKey2 = await hpke.jwk.publicFromPrivate(privateKey2)
   const recipients = {
     keys: [
@@ -68,9 +83,9 @@ it('JSON serialized HPKE JWE', async () => {
       publicKey2
     ]
   }
-  const psk = new TextEncoder().encode("jugemujugemugokounosurikirekaija")
-  const pskid = new TextEncoder().encode("our-pre-shared-key-id")
-  const message = "⌛ My lungs taste the air of Time Blown past falling sands ⌛"
+  const psk = jose.base64url.decode(psk_jwk.k)
+  const pskid = new TextEncoder().encode(psk_jwk.kid)
+  const message = "🎵 My lungs taste the air of Time Blown past falling sands 🎵"
   const plaintext = new TextEncoder().encode(message)
   const senderOptions = {
     algorithm: 'A128GCM' as 'A128GCM',
@@ -85,7 +100,6 @@ it('JSON serialized HPKE JWE', async () => {
     }
   }
   const jwe = await hpke.jwe.json.encrypt(plaintext, recipients, senderOptions)
-  // console.log(JSON.stringify(jwe, null, 2))
 
   expect(jwe.aad).toBe('cGF1bCBhdHJlaWRlcw')
   expect(jwe.recipients.length).toBe(2)
@@ -114,9 +128,11 @@ it('JSON serialized HPKE JWE', async () => {
     ],
   },
   recipientOptions)
+  decrypted2.additionalAuthenticatedData = new TextDecoder().decode(decrypted2.additionalAuthenticatedData)
+  decrypted2.plaintext = new TextDecoder().decode(decrypted2.plaintext)
   // console.log(JSON.stringify(decrypted2, null, 2))
-  expect(new TextDecoder().decode(decrypted2.additionalAuthenticatedData)).toBe('paul atreides')
-  expect(new TextDecoder().decode(decrypted2.plaintext)).toBe(message)
+  expect(decrypted2.additionalAuthenticatedData).toBe('paul atreides')
+  expect(decrypted2.plaintext).toBe(message)
   expect(decrypted2.protectedHeader.enc).toBe('A128GCM')
   expect(decrypted2.unprotectedHeader.kid).toBeDefined()
   expect(decrypted2.unprotectedHeader.alg).toBeDefined()

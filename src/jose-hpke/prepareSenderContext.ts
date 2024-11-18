@@ -1,15 +1,32 @@
 
-import { AeadId, CipherSuite, KdfId, KemId, SenderContextParams } from "hpke-js";
+import { SenderContextParams } from "hpke-js";
+
+import { Aes128Gcm, CipherSuite, HkdfSha256,
+  
+  DhkemP256HkdfSha256,
+   } from "@hpke/core";
+
+import { XWing } from "@hpke/hybridkem-x-wing";
+
+
 import { publicKeyFromJwk, privateKeyFromJwk } from '../crypto/keys'
 export const prepareSenderContext = async (recipientPublicKey: any, options: any) =>{
   const senderParams = {
     recipientPublicKey: await publicKeyFromJwk(recipientPublicKey),
   } as SenderContextParams
-  const suite = new CipherSuite({
-    kem: KemId.DhkemP256HkdfSha256,
-    kdf: KdfId.HkdfSha256,
-    aead: AeadId.Aes128Gcm,
-  })
+  let suite = new CipherSuite({
+    kem: new DhkemP256HkdfSha256(),
+    kdf: new HkdfSha256(),
+    aead: new Aes128Gcm(),
+  });
+  if (recipientPublicKey.alg === 'HPKE-X-Wing-SHA256-A128GCM'){
+    suite = new CipherSuite({
+      kem: new XWing(),
+      kdf: new HkdfSha256(),
+      aead: new Aes128Gcm(),
+    });
+   await suite.kem.importKey('jwk', {...recipientPublicKey, alg:'X-Wing' }, true)
+  }
   if (options?.keyManagementParameters){
     const { keyManagementParameters } = options
     if (keyManagementParameters.psk){

@@ -1,11 +1,11 @@
 
-import { Aes256Gcm, CipherSuite, HkdfSha256 } from "@hpke/core";
+import { Aes128Gcm, CipherSuite, HkdfSha256 } from "@hpke/core";
 import { XWing } from "@hpke/hybridkem-x-wing";
 
 import { generateKeyPair, exportJWK, calculateJwkThumbprintUri, base64url } from "jose"
 
 export const isKeyAlgorithmSupported = (recipient: Record<string, any>) => {
-  return ['HPKE-P256-SHA256-A128GCM', 'HPKE-P256-SHA256-A128GCM'].includes(recipient.alg)
+  return ['HPKE-P256-SHA256-A128GCM', 'HPKE-P256-SHA256-A128GCM', `HPKE-X-Wing-SHA256-A128GCM`].includes(recipient.alg)
 }
 
 export const formatJWK = (jwk: any) => {
@@ -32,7 +32,7 @@ export const generate = async (alg: 'HPKE-P256-SHA256-A128GCM' | 'HPKE-P256-SHA2
     const suite = new CipherSuite({
       kem: new XWing(),
       kdf: new HkdfSha256(),
-      aead: new Aes256Gcm(),
+      aead: new Aes128Gcm(),
     });
     const rkp:any = await suite.kem.generateKeyPair()
     return {

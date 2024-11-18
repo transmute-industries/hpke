@@ -2,14 +2,14 @@ import moment from 'moment'
 import { jose as hpke } from '../src'
 
 
-import { Aes256Gcm, CipherSuite, HkdfSha256 } from "@hpke/core";
+import { Aes128Gcm , CipherSuite, HkdfSha256 } from "@hpke/core";
 import { XWing } from "@hpke/hybridkem-x-wing";
 
 it('X-Wing Sanity', async () => {
     const suite = new CipherSuite({
       kem: new XWing(),
       kdf: new HkdfSha256(),
-      aead: new Aes256Gcm(),
+      aead: new Aes128Gcm(),
     });
     // NOTE: The following support for JWKs with the AKP key type is experimental.
     // Please be aware that the specifications are subject to change without notice.
@@ -70,3 +70,34 @@ it('X-Wing JWE', async () => {
   expect(new TextDecoder().decode(decrypted.additionalAuthenticatedData)).toBe('🏴‍☠️ beware the aad!')
 })
 
+
+
+it('X-Wing JWT', async () => {
+  const privateKey = await hpke.jwk.generate('HPKE-X-Wing-SHA256-A128GCM')
+  const publicKey = await hpke.jwk.publicFromPrivate(privateKey)
+  const iat = moment().unix()
+  const exp = moment().add(2, 'hours').unix()
+  const jwe = await hpke.jwt.encryptJWT({
+    iss: 'urn:example:issuer',
+    aud: 'urn:example:audience',
+    iat,
+    exp,
+  }, {
+    recipientPublicKey: publicKey
+  })
+  // console.log(jwe)
+  const result = await hpke.jwt.decryptJWT(
+    jwe,
+    {
+      recipientPrivateKey: privateKey
+    })
+  expect(result.payload['iss']).toBe('urn:example:issuer')
+  expect(result.payload['aud']).toBe('urn:example:audience')
+  expect(result.payload.iat).toBeDefined()
+  expect(result.payload.exp).toBeDefined()
+  expect(result.protectedHeader['alg']).toBe('HPKE-X-Wing-SHA256-A128GCM')
+  expect(result.protectedHeader['enc']).toBe('dir')
+  // protected header does not contain epk
+  expect(result.protectedHeader.epk).toBeUndefined()
+  // encapsulated key is transported through "encrypted_key"
+})
